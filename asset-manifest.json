@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/solagaci/static/css/main.d42adf4d.css",
+    "main.js": "/solagaci/static/js/main.3ecb9532.js",
+    "index.html": "/solagaci/index.html",
+    "main.d42adf4d.css.map": "/solagaci/static/css/main.d42adf4d.css.map",
+    "main.3ecb9532.js.map": "/solagaci/static/js/main.3ecb9532.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d42adf4d.css",
+    "static/js/main.3ecb9532.js"
+  ]
+}
