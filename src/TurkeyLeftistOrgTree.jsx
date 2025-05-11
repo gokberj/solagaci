@@ -1,344 +1,137 @@
-return (
-    <div className="w-full overflow-x-auto">
-      <div className="text-center py-4">
-        <h1 className="text-2xl font-bold mb-2">Türkiye Sol Örgütleri Soy Ağacı</h1>
-        <p className="text-gray-600 mb-4">Günümüzden 1920'lere - Bir örgüte tıklayarak soy ağacını görebilirsiniz</p>
-        
-        <div className="flex justify-center gap-4 flex-wrap mb-4 border-b border-gray-300 pb-4">
-          <div className="flex items-center">
-            <div className="w-6 h-1 bg-red-500 mr-2"></div>
-            <span>Doğrudan Evrim</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-6 h-1 border-t-2 border-dashed border-red-500 mr-2"></div>
-            <span>İdeolojik Etki</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-6 h-1 bg-red-500 mr-2"></div>
-            <span>Bölünme/Birleşme</span>
-          </div>
-        </div>
-      </div>
-            
-      <div className="relative overflow-x-auto overflow-y-auto" style={{ height: `${Math.min(1500, height + 100)}px` }}>
-        <svg width={width} height={height + 100} onClick={clearSelection}>
-          {/* Onlu Yıllar için yatay çizgiler ve gölgelemeler */}
-          {[2030, 2020, 2010, 2000, 1990, 1980, 1970, 1960, 1950, 1940, 1930, 1920].map((year, i) => {
-            const y = i * levelHeight;
-            return (
-              <g key={year}>
-                {/* Onlu yıl gölgeleme */}
-                <rect
-                  x={0} 
-                  y={y - levelHeight/2} 
-                  width={width}
-                  height={levelHeight}
-                  fill={i % 2 === 0 ? "#f5f5f5" : "#ffffff"}
-                  stroke="none"
-                />
-                {/* Yıl çizgisi */}
-                <line 
-                  x1={0} y1={y} 
-                  x2={width} y2={y} 
-                  stroke="#ddd" 
-                  strokeWidth={1} 
-                />
-                <text x={10} y={y - 10} fontSize={12} fill="#666" fontWeight="bold">
-                  {year}{'\''}lar
-                </text>
-              </g>
-            );
-          })}
-          
-          {/* Bağlantı çizgileri */}
-          {links.map((link, i) => {
-            const isActive = selectedOrg && highlightedLinks.some(l => l.source === link.source && l.target === link.target);
-            const midX = (link.sourceX + link.targetX) / 2;
-            const midY = (link.sourceY + link.targetY) / 2;
-            
-            // Bağlantı türü etiketi
-            let linkLabel = "";
-            switch(link.type) {
-              case "evolution": linkLabel = "Evrim"; break;
-              case "split": linkLabel = "Bölünme"; break;
-              case "renamed": linkLabel = "İsim Değişikliği"; break;
-              case "merged": linkLabel = "Birleşme"; break;
-              case "influence": linkLabel = "Etki"; break;
-              case "inspiration": linkLabel = "İlham"; break;
-              case "ideological": linkLabel = "İdeolojik Etki"; break;
-              case "direct": linkLabel = "Doğrudan"; break;
-              default: linkLabel = link.type;
-            }
-            
-            return (
-              <g key={`link-${i}`}>
-                <path
-                  d={`M${link.sourceX},${link.sourceY} C${link.sourceX},${(link.sourceY + link.targetY) / 2} ${link.targetX},${(link.sourceY + link.targetY) / 2} ${link.targetX},${link.targetY}`}
-                  stroke={getLinkColor(link)}
-                  strokeWidth={getLinkWidth(link)}
-                  fill="none"
-                  strokeDasharray={link.type === "ideological" ? "5,5" : "none"}
-                  opacity={isHighlighted(link.source) && isHighlighted(link.target) ? 0.8 : 0.3}
-                />
-                
-                {/* Bağlantı etiketi - sadece vurgulandığında göster */}
-                {isActive && (
-                  <>
-                    {/* Beyaz arka plan (outline efekti için) */}
-                    <text
-                      x={midX}
-                      y={midY}
-                      textAnchor="middle"
-                      fontSize={10}
-                      dy="-0.5em"
-                      fontWeight="bold"
-                      stroke="#ffffff"
-                      strokeWidth={3}
-                      fill="#ffffff"
-                      paintOrder="stroke"
-                    >
-                      {linkLabel}
-                    </text>
-                    {/* Ana metin */}
-                    <text
-                      x={midX}
-                      y={midY}
-                      textAnchor="middle"
-                      fontSize={10}
-                      dy="-0.5em"
-                      fontWeight="bold"
-                      fill={getLinkColor(link)}
-                    >
-                      {linkLabel}
-                    </text>
-                  </>
-                )}
-              </g>
-            );
-          })}
-          
-          {/* Örgüt daireleri ve logoları */}
-          {adjustedNodes.map(node => {
-            const isHovered = hoveredOrg === node.id;
-            return (
-            <g
-              key={node.id}
-              transform={`translate(${node.x}, ${node.y})`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNodeClick(node.id);
-              }}
-              onMouseEnter={() => setHoveredOrg(node.id)}
-              onMouseLeave={() => setHoveredOrg(null)}
-              style={{ cursor: 'pointer', opacity: isHighlighted(node.id) ? 1 : 0.4 }}
-            >
-              {/* Çember arka plan */}
-              <circle
-                r={nodeRadius}
-                fill="#ffffff"
-                stroke={node.id === selectedOrg ? getNodeColor(node) : "#999"}
-                strokeWidth={node.id === selectedOrg ? 2 : 1}
-              />
-              
-              {/* Logo */}
-              <image
-                href={node.logo}
-                x={-nodeRadius * 0.8}
-                y={-nodeRadius * 0.8}
-                width={nodeRadius * 1.6}
-                height={nodeRadius * 1.6}
-                clipPath={`circle(${nodeRadius * 0.8}px at ${0} ${0})`}
-              />
-              
-              {/* İsim etiketi - Beyaz arka plan ile */}
-              <text
-                y={nodeRadius + 15}
-                textAnchor="middle"
-                stroke="#ffffff"
-                strokeWidth={4}
-                paintOrder="stroke"
-                fill={!selectedOrg || highlightedNodes.includes(node.id) ? "#000" : "#999"}
-                fontSize={12}
-                fontWeight={node.id === selectedOrg ? "bold" : "normal"}
-              >
-                {node.shortName}
-              </text>
-              
-              {/* Kuruluş yılı - Beyaz arka plan ile */}
-              <text
-                y={nodeRadius + 30}
-                textAnchor="middle"
-                stroke="#ffffff"
-                strokeWidth={4}
-                paintOrder="stroke"
-                fill="#666"
-                fontSize={10}
-              >
-                {node.year}
-              </text>
-              
-              {/* Bilgi Popup - Hover olunca göster */}
-              {isHovered && partyDetails[node.id] && (
-                <g>
-                  {/* Popup Arka Planı */}
-                  <rect
-                    x={nodeRadius + 10}
-                    y={-nodeRadius - 60}
-                    width={220}
-                    height={120}
-                    rx={5}
-                    fill="white"
-                    stroke="#ccc"
-                    strokeWidth={1}
-                    filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.2))"
-                  />
-                  {/* Popup Arrow */}
-                  <path
-                    d={`M${nodeRadius} 0 L${nodeRadius + 10} -10 L${nodeRadius + 10} 10 Z`}
-                    fill="white"
-                    stroke="#ccc"
-                    strokeWidth={1}
-                  />
-                  {/* Parti Adı */}
-                  <text
-                    x={nodeRadius + 20}
-                    y={-nodeRadius - 40}
-                    fontWeight="bold"
-                    fontSize={12}
-                    fill="#333"
-                  >
-                    {partyDetails[node.id].fullName}
-                  </text>
-                  {/* Kurucular */}
-                  <text
-                    x={nodeRadius + 20}
-                    y={-nodeRadius - 25}
-                    fontSize={10}
-                    fill="#555"
-                  >
-                    <tspan fontWeight="bold">Kurucular:</tspan> {partyDetails[node.id].founders}
-                  </text>
-                  {/* Bilgi Metni (Multi-line) */}
-                  <foreignObject
-                    x={nodeRadius + 20}
-                    y={-nodeRadius - 10}
-                    width={200}
-                    height={60}
-                  >
-                    <div style={{ fontSize: "10px", color: "#555", fontFamily: "Arial", lineHeight: "1.2" }}>
-                      {partyDetails[node.id].info}
-                    </div>
-                  </foreignObject>
-                </g>
-              )}
-            </g>
-          )})}
-        </svg>
-      </div>
-      
-      <div className="mt-8 border-t border-gray-300 pt-4">
-        {selectedOrg && partyDetails[selectedOrg] && (
-          <div className="mt-4">
-            <h3 className="font-bold">
-              {partyDetails[selectedOrg].fullName} Hakkında
-            </h3>
-            <p className="mt-2">
-              {partyDetails[selectedOrg].info}
-            </p>
-          </div>
-        )}
-      </div>
-      
-      <div className="text-sm text-gray-500 mt-8">
-        <p>Not: Bu görselleştirme CSV verilerine dayanmaktadır ve sürekli güncellenebilir.</p>
-      </div>
-    </div>
-  );import { useState, useEffect } from 'react';
-import Papa from 'papaparse';
+import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
+const GOOGLE_SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwvhTlVgW9A0p1xx40Y237aWyluAA4bp8NvXw5h4uO33VJXn7ZtOrYMR1aI0vrR60XP/exec';
+
 export default function TurkeyLeftistOrgTree() {
-  const [orgData, setOrgData] = useState({ nodes: [], links: [] });
+  const [hoveredOrg, setHoveredOrg] = useState(null);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [hoveredLinks, setHoveredLinks] = useState([]);
+  const [selectedLinks, setSelectedLinks] = useState([]);
+  const [orgData, setOrgData] = useState({nodes: [], links: []});
   const [partyDetails, setPartyDetails] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedOrg, setSelectedOrg] = useState(null);
-  const [highlightedNodes, setHighlightedNodes] = useState([]);
-  const [highlightedLinks, setHighlightedLinks] = useState([]);
-  const [hoveredOrg, setHoveredOrg] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(0);
+  const svgRef = useRef(null);
+  const containerRef = useRef(null);
 
-  const levelHeight = 130;
-  const width = 900;
-  const height = 12 * levelHeight; // 12 onlu yıl (2030ler->1920ler)
+  const levelHeight = 100;
   const nodeRadius = 35;
+  const minYear = 1920;
+  const maxYear = 2025;
+  const yearRange = maxYear - minYear;
+  // Grid için yatay hücre sayısı
+  const GRID_COLUMNS = 13;
 
-  // CSV'den veri yükleme
+  // Pencere boyutu değişimini izle
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  // Dış alana tıklama işlemi için event listener ekle
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      // SVG elemanının dışına tıklandı mı kontrol et
+      if (svgRef.current && !svgRef.current.contains(e.target)) {
+        // Seçili node'u temizle
+        setSelectedOrg(null);
+        setSelectedLinks([]);
+      }
+    };
+    
+    // Timeline container'ına tıklama işlemi için event listener
+    const handleTimelineClick = (e) => {
+      // Eğer doğrudan timeline container'ına tıklandıysa (SVG veya node'lar hariç)
+      if (e.target.classList.contains('timeline-container') || 
+          e.target.classList.contains('decade-background') || 
+          e.target.classList.contains('year-line')) {
+        setSelectedOrg(null);
+        setSelectedLinks([]);
+      }
+    };
+    
+    // Event listener'ları ekle
+    document.addEventListener('mousedown', handleOutsideClick);
+    const timelineContainer = document.querySelector('.timeline-container');
+    if (timelineContainer) {
+      timelineContainer.addEventListener('click', handleTimelineClick);
+    }
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      if (timelineContainer) {
+        timelineContainer.removeEventListener('click', handleTimelineClick);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        const response = await fetch(GOOGLE_SHEETS_API_URL);
+        const result = await response.json();
         
-        // Google Sheets CSV URL'si
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRx2IM2CyaMz9dkn7BxyEIpKnYEZGjMZUzlEgeYdN3CT3yCCY37AqNzxmil3EMj3PnEo7DMX2DyMY8j/pub?output=csv';
-        
-        const response = await fetch(csvUrl);
-        if (!response.ok) {
-          throw new Error('CSV verileri yüklenemedi');
-        }
-        
-        const csvText = await response.text();
-        
-        const result = Papa.parse(csvText, {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true
-        });
-        
-        if (result.data && result.data.length > 0) {
-          console.log("CSV verileri yüklendi:", result.data);
-          
-          // Düğümler ve bağlantıları ayrıştır
-          const nodes = result.data.map(row => ({
+        if (result && result.length > 0) {
+          const nodes = result.map(row => ({
             id: row.id,
             name: row.isim,
             shortName: row.kisa_isim,
-            year: row.kurulus,
-            level: row.level || 0,
+            year: parseInt(row.kurulus) || 2000,
+            level: parseInt(row.level) || 0,
             color: row.renk || "#1976d2",
             logo: row.logo_url || "/api/placeholder/60/60",
-            family: row.aile || "other",
-            decade: Math.floor(row.kurulus / 10) * 10
+            family: row.aile || row.id,
+            status: row.durum || "Aktif",
+            armed: row.silahli === "Evet" || row.silahli === "evet" || row.silahli === "E" || row.silahli === "e" || false
           }));
           
-          // Bağlantıları oluştur
-          const links = result.data
-            .filter(row => row.atasi_id) // Atası olan düğümleri filtrele
-            .map(row => ({
-              source: row.atasi_id,
-              target: row.id,
-              type: row.iliski_turu || "direct"
-            }));
+          const links = [];
+          result.forEach(row => {
+            if (row.atasi_id && row.atasi_id.trim() !== "") {
+              links.push({
+                source: row.atasi_id,
+                target: row.id,
+                type: row.iliski_turu || "direct"
+              });
+            }
+          });
           
-          // Parti detaylarını oluştur (popup için)
           const details = {};
-          result.data.forEach(row => {
+          result.forEach(row => {
             details[row.id] = {
-              fullName: row.isim,
-              founders: row.kurucular || "Bilinmiyor",
-              info: row.gorus || `${row.isim} hakkında bilgi bulunmuyor.`
+              fullName: row.isim || "",
+              founders: row.kurucular || "",
+              info: row.gorus || "",
+              status: row.durum || "Aktif",
+              startYear: row.kurulus || "",
+              endYear: row.kapanis || "",
+              website: row.url || "",
+              armed: row.silahli === "Evet" || row.silahli === "evet" || row.silahli === "E" || row.silahli === "e" || false
             };
           });
           
-          // Sonuçları state'e aktar
-          setOrgData({ nodes, links });
+          setOrgData({
+            nodes: nodes,
+            links: links
+          });
           setPartyDetails(details);
-          setLoading(false);
         } else {
-          throw new Error('CSV verileri boş veya geçersiz format');
+          throw new Error('Veri formatı beklendiği gibi değil veya boş veri döndü');
         }
-      } catch (error) {
-        console.error("Veri yükleme hatası:", error);
-        setError(error.message);
+      } catch (err) {
+        console.error('Veri getirme hatası:', err);
+        setError('API error');
+      } finally {
         setLoading(false);
       }
     };
@@ -346,30 +139,40 @@ export default function TurkeyLeftistOrgTree() {
     fetchData();
   }, []);
 
-  // Veriler yüklenene kadar yükleniyor göster
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-4">Veriler yükleniyor...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!loading && svgRef.current) {
+      const nodes = d3.selectAll('.node-circle');
+      nodes
+        .attr('opacity', 0)
+        .attr('r', 0)
+        .transition()
+        .duration(800)
+        .delay((d, i) => i * 20)
+        .attr('opacity', 1)
+        .attr('r', nodeRadius);
+      
+      const links = d3.selectAll('.link-path');
+      links
+        .attr('stroke-dasharray', function() {
+          return this.getTotalLength();
+        })
+        .attr('stroke-dashoffset', function() {
+          return this.getTotalLength();
+        })
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 10 + 300)
+        .attr('stroke-dashoffset', 0);
 
-  // Hata durumunda hata mesajı göster
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center text-red-500">
-          <h3 className="text-xl font-bold mb-2">Veri Yükleme Hatası</h3>
-          <p>{error}</p>
-          <p className="mt-4 text-sm">CSV dosyasının doğru formatta olduğundan ve erişilebilir olduğundan emin olun.</p>
-        </div>
-      </div>
-    );
-  }
+      const labels = d3.selectAll('.node-label');
+      labels
+        .attr('opacity', 0)
+        .transition()
+        .duration(500)
+        .delay((d, i) => i * 20 + 700)
+        .attr('opacity', 1);
+    }
+  }, [loading]);
 
   const findAncestors = (nodeId, visited = new Set()) => {
     if (visited.has(nodeId)) return [];
@@ -399,214 +202,934 @@ export default function TurkeyLeftistOrgTree() {
     return descendants;
   };
 
+  const handleNodeHover = (orgId) => {
+    if (orgId) {
+      setHoveredOrg(orgId);
+      
+      const ancestorLinks = findAncestors(orgId);
+      const descendantLinks = findDescendants(orgId);
+      
+      const allLinks = [...ancestorLinks, ...descendantLinks];
+      setHoveredLinks(allLinks);
+    } else {
+      setHoveredOrg(null);
+      setHoveredLinks([]);
+    }
+  };
+  
   const handleNodeClick = (orgId) => {
-    setSelectedOrg(orgId);
-    
-    // Atalar ve torunları bul
-    const ancestorLinks = findAncestors(orgId);
-    const descendantLinks = findDescendants(orgId);
-    
-    // Tüm ilgili bağları birleştir
-    const allLinks = [...ancestorLinks, ...descendantLinks];
-    setHighlightedLinks(allLinks);
-    
-    // İlgili düğümleri topla
-    const nodes = new Set();
-    nodes.add(orgId);
-    
-    allLinks.forEach(link => {
-      nodes.add(link.source);
-      nodes.add(link.target);
-    });
-    
-    setHighlightedNodes(Array.from(nodes));
+    if (selectedOrg === orgId) {
+      // Zaten seçili olan node'a tıklandığında seçimi kaldır
+      setSelectedOrg(null);
+      setSelectedLinks([]);
+    } else {
+      // Yeni bir node seçildiğinde o node'u ve bağlantılarını işaretle
+      setSelectedOrg(orgId);
+      
+      const ancestorLinks = findAncestors(orgId);
+      const descendantLinks = findDescendants(orgId);
+      
+      const allLinks = [...ancestorLinks, ...descendantLinks];
+      setSelectedLinks(allLinks);
+    }
   };
 
-  const isHighlighted = (id) => {
-    return !selectedOrg || highlightedNodes.includes(id);
+  const isHovered = (id) => {
+    if (selectedOrg) {
+      // Bir node seçiliyse, hover efektlerini devre dışı bırak
+      return false;
+    }
+    
+    if (!hoveredOrg) return false;
+    
+    if (id === hoveredOrg) return true;
+    
+    const hoveredNodeIds = new Set();
+    hoveredNodeIds.add(hoveredOrg);
+    
+    hoveredLinks.forEach(link => {
+      hoveredNodeIds.add(link.source);
+      hoveredNodeIds.add(link.target);
+    });
+    
+    return hoveredNodeIds.has(id);
+  };
+  
+  const isSelected = (id) => {
+    if (!selectedOrg) return false;
+    
+    if (id === selectedOrg) return true;
+    
+    const selectedNodeIds = new Set();
+    selectedNodeIds.add(selectedOrg);
+    
+    selectedLinks.forEach(link => {
+      selectedNodeIds.add(link.source);
+      selectedNodeIds.add(link.target);
+    });
+    
+    return selectedNodeIds.has(id);
   };
 
   const getLinkColor = (link) => {
-    if (!selectedOrg) {
-      return "#999";
+    // Seçili link varsa onun rengi
+    if (selectedOrg && selectedLinks.some(l => l.source === link.source && l.target === link.target)) {
+      return getTypeColor(link.type);
     }
-    return highlightedLinks.some(l => l.source === link.source && l.target === link.target) ? "#ff5722" : "#ddd";
+    
+    // Hover durumundaki link rengi
+    if (!selectedOrg && hoveredOrg && hoveredLinks.some(l => l.source === link.source && l.target === link.target)) {
+      return getTypeColor(link.type);
+    }
+    
+    // Normal durum
+    return "#ddd";
+  };
+  
+  const getTypeColor = (type) => {
+    switch(type) {
+      case "evolution": return "#2196F3";
+      case "split": return "#FF5722";
+      case "renamed": return "#4CAF50";
+      case "merged": return "#9C27B0";
+      case "influence": return "#FFC107";
+      case "inspiration": return "#E91E63";
+      case "ideological": return "#795548";
+      case "direct": return "#607D8B";
+      default: return "#999";
+    }
   };
 
   const getLinkWidth = (link) => {
-    if (!selectedOrg) return 2;
-    return highlightedLinks.some(l => l.source === link.source && l.target === link.target) ? 3 : 1;
+    // Seçili link ise kalın çizgi
+    if (selectedOrg && selectedLinks.some(l => l.source === link.source && l.target === link.target)) {
+      return 3;
+    }
+    
+    // Hover durumundaki link kalınlığı
+    if (!selectedOrg && hoveredOrg && hoveredLinks.some(l => l.source === link.source && l.target === link.target)) {
+      return 3;
+    }
+    
+    // Normal kalınlık
+    return 1.5;
   };
 
   const getNodeColor = (node) => {
-    if (!selectedOrg) return node.color || "#1976d2";
-    return node.id === selectedOrg ? node.color || "#e91e63" : 
-           highlightedNodes.includes(node.id) ? node.color || "#ff5722" : "#aaa";
-  };
-
-  const clearSelection = () => {
-    setSelectedOrg(null);
-    setHighlightedNodes([]);
-    setHighlightedLinks([]);
-  };
-
-  // Her ailenin sütun indeksini belirle
-  const columnOrder = ["TKP", "SOL", "HDP", "TIP", "EMEP", "DSP"];
-  const columnAssignments = {};
-  columnOrder.forEach((family, index) => {
-    columnAssignments[family] = index;
-  });
-  
-  // Özel aile atamalarını düzelt
-  // Örneğin: orgData.nodes.forEach(node => {
-  //   if (node.id === "TKP1920" || node.id === "TKP1920_ORIG") {
-  //     node.family = "TKP";
-  //   }
-  // });
-
-  // Düğümlerin x,y pozisyonlarını ayarlama
-  const nodes = orgData.nodes.map(node => {
-    // Ailenin sütun indeksi 
-    const columnIndex = columnAssignments[node.family] !== undefined ? 
-                        columnAssignments[node.family] : 
-                        Object.keys(columnAssignments).length;
-    
-    // Sütun genişliği
-    const columnWidth = width / Math.max(6, Object.keys(columnAssignments).length);
-    
-    // X pozisyonu: ailenin sütunu
-    const x = columnWidth / 2 + columnIndex * columnWidth;
-    
-    // Onlu yıl hesapla (eğer CSV'de belirtilmemişse)
-    const decade = node.decade || Math.floor(node.year / 10) * 10;
-    
-    // 2030'lar -> 0, 2020'lar -> 1, vs. olacak şekilde seviye indeksi hesapla
-    const levelIndex = (2030 - decade) / 10;
-    
-    // Bazı yıllar için ek dikey ofseti ekle (1920'ler ve 2020'ler arasındaki mesafeyi artır)
-    let extraOffset = 0;
-    if (decade <= 1980) extraOffset = 20;
-    if (decade <= 1960) extraOffset = 40;
-    if (decade <= 1940) extraOffset = 60;
-    if (decade <= 1920) extraOffset = 80;
-    
-    return {
-      ...node,
-      x: x,
-      y: levelIndex * levelHeight + 70 + extraOffset,
-      decade
-    };
-  });
-
-  // Bağlantılı düğümler için çekim kuvvetleri uygula
-  const linkForce = 0.2; // Çekim kuvveti faktörü
-  const adjustedNodes = [...nodes];
-  
-  orgData.links.forEach(link => {
-    const sourceNode = adjustedNodes.find(n => n.id === link.source);
-    const targetNode = adjustedNodes.find(n => n.id === link.target);
-    
-    if (sourceNode && targetNode && sourceNode.x !== targetNode.x) {
-      // Düğümlerin yatay çekim kuvvetini hesapla
-      const dx = targetNode.x - sourceNode.x;
-      const pull = dx * linkForce;
-      
-      // Düğümleri birbirine doğru çek
-      sourceNode.x += pull / 2;
-      targetNode.x -= pull / 2;
+    // Seçili node rengi
+    if (isSelected(node.id)) {
+      return node.color || "#1976d2";
     }
-  });
-  
-  // Çakışma tespiti ve düzeltmesi
-  const nodePositions = {};
-  
-  // Poziyon çakışmalarını tespit et (daha kesin değerler için yuvarlama yapmadan)
-  adjustedNodes.forEach(node => {
-    // Yakın düğümleri gruplamak için daha geniş bir pozisyon aralığı kullan
-    for (let x = Math.floor(node.x - nodeRadius); x <= Math.ceil(node.x + nodeRadius); x += 10) {
-      const key = `${x}_${node.decade}`;
-      if (!nodePositions[key]) {
-        nodePositions[key] = [];
+    
+    // Hover durumundaki node rengi
+    if (!selectedOrg && isHovered(node.id)) {
+      return node.color || "#1976d2";
+    }
+    
+    // Seçili veya hover varken, ilgili olmayan node rengi
+    if ((selectedOrg && !isSelected(node.id)) || (hoveredOrg && !isHovered(node.id) && !selectedOrg)) {
+      return "#aaa";
+    }
+    
+    // Normal renk
+    return node.color || "#1976d2";
+  };
+
+  const getNodeStrokeColor = (node) => {
+    if (node.armed) {
+      return "#ff0000";
+    }
+    
+    if (node.status === "Aktif") {
+      return "#4CAF50";
+    }
+    
+    return "#999999";
+  };
+
+  const getNodeOpacity = (node) => {
+    // Seçili node opasitesi
+    if (selectedOrg) {
+      return isSelected(node.id) ? 1 : 0.4;
+    }
+    
+    // Hover durumundaki node opasitesi
+    if (hoveredOrg) {
+      return isHovered(node.id) ? 1 : 0.4;
+    }
+    
+    // Normal opasite
+    return 1;
+  };
+
+  const getLinkOpacity = (link) => {
+    // Seçili link opasitesi
+    if (selectedOrg) {
+      return selectedLinks.some(l => l.source === link.source && l.target === link.target) ? 0.9 : 0.15;
+    }
+    
+    // Hover durumundaki link opasitesi
+    if (hoveredOrg) {
+      return hoveredLinks.some(l => l.source === link.source && l.target === link.target) ? 0.9 : 0.15;
+    }
+    
+    // Normal opasite
+    return 0.6;
+  };
+
+  // Grid sisteminde node'ları hizala ve konumlandır
+  const positionNodes = (nodes) => {
+    const adjustedNodes = [...nodes];
+    
+    // 10'lu yıllara göre node'ları grupla
+    const decadeGroups = {};
+    adjustedNodes.forEach(node => {
+      const decade = Math.floor(node.year / 10) * 10;
+      if (!decadeGroups[decade]) {
+        decadeGroups[decade] = [];
       }
-      nodePositions[key].push(node.id);
-    }
-  });
-  
-  // Çakışan düğümleri düzenle - Önce grupları birleştir
-  const collisionGroups = [];
-  const processedNodes = new Set();
-  
-  Object.values(nodePositions).forEach(nodeIds => {
-    if (nodeIds.length > 1) {
-      // Bu gruptaki düğümleri al
-      const nodesInThisGroup = new Set(nodeIds);
+      decadeGroups[decade].push(node);
+    });
+    
+    // Her 10'lu yıl için grid hücre genişliğini hesapla ve nodeları konumlandır
+    Object.entries(decadeGroups).forEach(([decade, nodesInDecade]) => {
+      const decadeInt = parseInt(decade);
       
-      // Bu düğümlerden herhangi biri zaten işlendiyse, hangi grupta olduğunu bul
-      let existingGroupIndex = -1;
-      nodesInThisGroup.forEach(nodeId => {
-        if (processedNodes.has(nodeId)) {
-          for (let i = 0; i < collisionGroups.length; i++) {
-            if (collisionGroups[i].has(nodeId)) {
-              existingGroupIndex = i;
-              break;
-            }
-          }
+      // Sonraki decade'i hesapla
+      const nextDecade = decadeInt + 10;
+      
+      // İki çizgi arasındaki mesafeyi hesapla
+      const decadeYPosition = ((maxYear - decadeInt) / yearRange) * height + 50;
+      const nextDecadeYPosition = ((maxYear - nextDecade) / yearRange) * height + 50;
+      
+      // Decade çizgileri arasında ortalama y pozisyonu
+      const y = (decadeYPosition + nextDecadeYPosition) / 2;
+      
+      // Gruptaki node sayısı
+      const count = nodesInDecade.length;
+      
+      // Node'ları sırala (yıllarına göre sırala)
+      nodesInDecade.sort((a, b) => a.year - b.year);
+      
+      // Node'lar arası mesafe (gerçekten merkezlenmiş olması için)
+      const nodeSpacing = 90; // Nodelar arasındaki mesafe 
+      
+      // Tüm nodelar için gerekli toplam genişlik
+      const totalWidth = (count - 1) * nodeSpacing;
+      
+      // Başlangıç pozisyonu (tüm nodeları ortaya hizalamak için)
+      const startX = (svgWidth - totalWidth) / 2;
+      
+      // Her node için konumu hesapla
+      nodesInDecade.forEach((node, index) => {
+        // X pozisyonu hesapla (ortada toplanmış)
+        const xPos = startX + (index * nodeSpacing);
+        
+        // Node'u güncelle
+        const nodeToUpdate = adjustedNodes.find(n => n.id === node.id);
+        if (nodeToUpdate) {
+          nodeToUpdate.x = xPos;
+          nodeToUpdate.y = y;
         }
       });
-      
-      // Eğer bu düğümler zaten bir gruba aitse, o gruba ekle
-      if (existingGroupIndex !== -1) {
-        nodesInThisGroup.forEach(nodeId => {
-          collisionGroups[existingGroupIndex].add(nodeId);
-          processedNodes.add(nodeId);
-        });
-      }
-      // Değilse, yeni bir grup oluştur
-      else {
-        collisionGroups.push(nodesInThisGroup);
-        nodesInThisGroup.forEach(nodeId => {
-          processedNodes.add(nodeId);
-        });
-      }
-    }
-  });
-  
-  // Her çakışma grubu için düğümleri yeniden konumlandır
-  collisionGroups.forEach(group => {
-    const nodeIds = Array.from(group);
-    // Çakışan düğümleri yatay olarak dağıt
-    const offset = 80; // Daha geniş bir ofset kullan
-    const totalWidth = (nodeIds.length - 1) * offset;
-    const startOffset = -totalWidth / 2;
-    
-    // Bu gruptaki düğümlerin ortalama x pozisyonunu bul
-    const avgX = nodeIds.reduce((sum, nodeId) => {
-      const node = adjustedNodes.find(n => n.id === nodeId);
-      return sum + node.x;
-    }, 0) / nodeIds.length;
-    
-    // Düğümleri ortalama pozisyon etrafında dağıt
-    nodeIds.forEach((nodeId, index) => {
-      const nodeIndex = adjustedNodes.findIndex(n => n.id === nodeId);
-      if (nodeIndex !== -1) {
-        adjustedNodes[nodeIndex].x = avgX + startOffset + (index * offset);
-      }
     });
-  });
-  
-  // Linkleri yeni düğüm pozisyonlarına göre güncelle
+    
+    return adjustedNodes;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="mt-4">Veriler yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center text-red-500">
+          <h3 className="text-xl font-bold mb-2">API error</h3>
+        </div>
+      </div>
+    );
+  }
+
+  // Tam ekran genişliği kullan (margin'siz)
+  const fullWidth = windowWidth;
+  const svgWidth = fullWidth;
+  const height = 12 * levelHeight;
+
+  // Node'ları konumlandır
+  const adjustedNodes = positionNodes(orgData.nodes);
+
+  // Bağlantıları güncelle
   const links = orgData.links.map(link => {
     const sourceNode = adjustedNodes.find(n => n.id === link.source);
     const targetNode = adjustedNodes.find(n => n.id === link.target);
     
-    if (sourceNode && targetNode) {
-      return {
-        ...link,
-        sourceX: sourceNode.x,
-        sourceY: sourceNode.y,
-        targetX: targetNode.x,
-        targetY: targetNode.y
-      };
+    if (!sourceNode || !targetNode) {
+      return null;
     }
-    return null;
-  }).filter(link => link !== null); // Null değerleri filtrele
+    
+    return {
+      ...link,
+      sourceX: sourceNode.x,
+      sourceY: sourceNode.y,
+      targetX: targetNode.x,
+      targetY: targetNode.y
+    };
+  }).filter(link => link !== null);
+
+  // Onlu yıl etiketleri
+  const decadeLabels = [];
+  for (let year = 2020; year >= 1920; year -= 10) {
+    const yearPosition = ((maxYear - year) / yearRange) * height + 50;
+    
+    decadeLabels.push({
+      year: year,
+      y: yearPosition
+    });
+  }
+
+  // Grid çizgilerini göster
+  const gridLines = [];
+  for (let i = 1; i < GRID_COLUMNS; i++) {
+    const x = (svgWidth / GRID_COLUMNS) * i;
+    gridLines.push(x);
+  }
+
+  return (
+    <div ref={containerRef} className="full-width-container">
+      <div className="text-center py-4">
+        <h1 className="text-2xl font-bold mb-2">Türkiye Sol Örgütleri Soy Ağacı</h1>
+      </div>
+      
+      <div className="timeline-container" style={{ position: 'relative', height: `${Math.min(1500, height + 100)}px`, overflow: 'hidden' }}>
+        {/* Onlu Yılların Arkaplan Şeritleri */}
+        {decadeLabels.map((decade, i) => {
+          const nextDecadeIndex = i + 1;
+          const nextDecadeY = nextDecadeIndex < decadeLabels.length ? 
+                            decadeLabels[nextDecadeIndex].y : 
+                            ((maxYear - (minYear - 10)) / yearRange) * height + 50;
+          
+          return (
+            <div
+              key={`decade-${decade.year}`}
+              className="decade-background"
+              style={{
+                position: 'absolute',
+                top: decade.y,
+                left: 0,
+                right: 0,
+                width: '100vw',
+                height: nextDecadeY - decade.y,
+                backgroundColor: i % 2 === 0 ? "#f9f9f9" : "#ffffff",
+                zIndex: 1
+              }}
+            />
+          );
+        })}
+        
+        {/* Onlu Yıl Çizgileri */}
+        {decadeLabels.map(decade => (
+          <div
+                          key={`yearline-${decade.year}`}
+              className="year-line"
+            style={{
+              position: 'absolute',
+              top: decade.y,
+              left: 0,
+              right: 0,
+              width: '100vw',
+              height: 0.5,
+              backgroundColor: "#000",
+              zIndex: 2
+            }}
+          >
+            <div 
+              style={{
+                position: 'absolute',
+                left: 8,
+                top: -14,
+                fontSize: 12,
+                fontWeight: 'bold',
+                color: '#666'
+              }}
+            >
+              {decade.year}
+            </div>
+          </div>
+        ))}
+        
+        {/* Görünmez Grid Çizgileri (Debug için görünür yapabilirsiniz) */}
+        {gridLines.map((x, i) => (
+          <div
+            key={`gridline-${i}`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: x,
+              width: 1,
+              height: '100%',
+              backgroundColor: "transparent", /* Görünmez */
+              zIndex: 2,
+              opacity: 0 /* Tamamen görünmez */
+            }}
+          />
+        ))}
+        
+        {/* SVG İçeriği */}
+        <div 
+          style={{ 
+            position: 'relative',
+            width: `${svgWidth}px`,
+            height: `${height + 100}px`,
+            zIndex: 10,
+            overflow: 'visible'
+          }}
+        >
+          <svg 
+            width={svgWidth} 
+            height={height + 100} 
+            ref={svgRef}
+            style={{
+              display: 'block',
+              zIndex: 10
+            }}
+            onClick={(e) => {
+              // SVG'nin doğrudan kendisine tıklandığında (node veya link dışında)
+              if (e.target.tagName === 'svg') {
+                setSelectedOrg(null);
+                setSelectedLinks([]);
+              }
+            }}
+          >
+            <defs>
+              {adjustedNodes.map(node => (
+                <clipPath id={`clip-${node.id}`} key={`clip-${node.id}`}>
+                  <circle r={nodeRadius * 0.8} cx="0" cy="0" />
+                </clipPath>
+              ))}
+            </defs>
+            
+            {/* SVG içeriğinin render sırası:
+                 1. Normal, seçili olmayan bağlantılar (en altta)
+                 2. Highlight edilmiş bağlantılar (ortada)
+                 3. Normal node'lar
+                 4. Highlight edilmiş node'lar
+                 5. Bağlantı etiketleri (en üstte)
+            */}
+            
+            {/* Normal, seçili olmayan bağlantılar */}
+            <g className="links-container-background">
+              {links.map((link, i) => {
+                const isInHover = hoveredOrg && hoveredLinks.some(l => l.source === link.source && l.target === link.target);
+                const isSelected = selectedOrg && selectedLinks.some(l => l.source === link.source && l.target === link.target);
+                
+                // Sadece vurgulanmayan bağlantıları burada göster
+                if (!isInHover && !isSelected) {
+                  return (
+                    <path
+                      key={`link-bg-${i}`}
+                      className="link-path"
+                      d={`M${link.sourceX},${link.sourceY} C${link.sourceX},${(link.sourceY + link.targetY) / 2} ${link.targetX},${(link.sourceY + link.targetY) / 2} ${link.targetX},${link.targetY}`}
+                      stroke={getLinkColor(link)}
+                      strokeWidth={getLinkWidth(link)}
+                      fill="none"
+                      strokeDasharray={link.type === "ideological" ? "5,5" : "none"}
+                      opacity={getLinkOpacity(link)}
+                      style={{
+                        transition: "stroke 0.3s, stroke-width 0.3s, opacity 0.3s",
+                      }}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </g>
+            
+            {/* Highlight edilmiş bağlantılar - nodelardan ÖNCE */}
+            <g className="links-container-foreground">
+              {links.map((link, i) => {
+                const isInHover = hoveredOrg && hoveredLinks.some(l => l.source === link.source && l.target === link.target);
+                const isSelected = selectedOrg && selectedLinks.some(l => l.source === link.source && l.target === link.target);
+                
+                // Sadece vurgulanan bağlantıları burada göster
+                if (isInHover || isSelected) {
+                  return (
+                    <path
+                      key={`link-fg-${i}`}
+                      className="link-path highlighted"
+                      d={`M${link.sourceX},${link.sourceY} C${link.sourceX},${(link.sourceY + link.targetY) / 2} ${link.targetX},${(link.sourceY + link.targetY) / 2} ${link.targetX},${link.targetY}`}
+                      stroke={getLinkColor(link)}
+                      strokeWidth={getLinkWidth(link)}
+                      fill="none"
+                      strokeDasharray={link.type === "ideological" ? "5,5" : "none"}
+                      opacity={getLinkOpacity(link)}
+                      style={{
+                        transition: "stroke 0.3s, stroke-width 0.3s, opacity 0.3s",
+                      }}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </g>
+            
+            {/* Normal node'lar - Highlight edilmiş bağlantılarından sonra */}
+            <g className="nodes-container-normal">
+              {adjustedNodes.map(node => {
+                const isNodeHovered = hoveredOrg === node.id;
+                const isNodeSelected = selectedOrg === node.id;
+                
+                // Sadece vurgulanmayan node'ları burada göster
+                if (!isNodeHovered && !isNodeSelected) {
+                  return (
+                  <g
+                    key={`node-normal-${node.id}`}
+                    transform={`translate(${node.x}, ${node.y})`}
+                    onMouseEnter={() => handleNodeHover(node.id)}
+                    onMouseLeave={() => handleNodeHover(null)}
+                    onClick={() => handleNodeClick(node.id)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      opacity: getNodeOpacity(node),
+                      transition: "opacity 0.3s",
+                    }}
+                  >
+                    <circle
+                      className="node-circle"
+                      r={nodeRadius}
+                      fill="#ffffff"
+                      stroke={getNodeStrokeColor(node)}
+                      strokeWidth={1.5}
+                      style={{
+                        transition: "stroke 0.3s, stroke-width 0.3s",
+                      }}
+                    />
+                    
+                    <image
+                      href={node.logo}
+                      x={-nodeRadius * 0.8}
+                      y={-nodeRadius * 0.8}
+                      width={nodeRadius * 1.6}
+                      height={nodeRadius * 1.6}
+                      clipPath={`url(#clip-${node.id})`}
+                    />
+                    
+                    <text
+                      className="node-label"
+                      y={nodeRadius + 15}
+                      textAnchor="middle"
+                      stroke="#ffffff"
+                      strokeWidth={4}
+                      paintOrder="stroke"
+                      fill="#999"
+                      fontSize={12}
+                      fontWeight="normal"
+                      style={{ 
+                        transition: "fill 0.3s, font-weight 0.3s",
+                      }}
+                    >
+                      {node.shortName}
+                    </text>
+                    
+                    <text
+                      className="node-label"
+                      y={nodeRadius + 30}
+                      textAnchor="middle"
+                      stroke="#ffffff"
+                      strokeWidth={4}
+                      paintOrder="stroke"
+                      fill="#666"
+                      fontSize={10}
+                    >
+                      {node.year}
+                    </text>
+                  </g>
+                  );
+                }
+                return null;
+              })}
+            </g>
+            
+            {/* Highlight edilmiş node'lar - En son, bağlantıların üstünde */}
+            <g className="nodes-container-highlighted">
+              {adjustedNodes.map(node => {
+                const isNodeHovered = hoveredOrg === node.id;
+                const isNodeSelected = selectedOrg === node.id;
+                
+                // Sadece vurgulanmış node'ları burada göster
+                if (isNodeHovered || isNodeSelected) {
+                  return (
+                  <g
+                    key={`node-highlight-${node.id}`}
+                    transform={`translate(${node.x}, ${node.y})`}
+                    onMouseEnter={() => handleNodeHover(node.id)}
+                    onMouseLeave={() => handleNodeHover(null)}
+                    onClick={() => handleNodeClick(node.id)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      opacity: 1, // Vurgulanmış node'lar her zaman tam opasite
+                      transition: "opacity 0.3s",
+                    }}
+                  >
+                    <circle
+                      className={`node-circle ${isNodeSelected ? 'selected' : ''}`}
+                      r={nodeRadius}
+                      fill="#ffffff"
+                      stroke={getNodeStrokeColor(node)}
+                      strokeWidth={2}
+                      style={{
+                        transition: "stroke 0.3s, stroke-width 0.3s",
+                      }}
+                    />
+                    
+                    <image
+                      href={node.logo}
+                      x={-nodeRadius * 0.8}
+                      y={-nodeRadius * 0.8}
+                      width={nodeRadius * 1.6}
+                      height={nodeRadius * 1.6}
+                      clipPath={`url(#clip-${node.id})`}
+                    />
+                    
+                    <text
+                      className="node-label"
+                      y={nodeRadius + 15}
+                      textAnchor="middle"
+                      stroke="#ffffff"
+                      strokeWidth={4}
+                      paintOrder="stroke"
+                      fill="#000"
+                      fontSize={12}
+                      fontWeight="normal"
+                      style={{ 
+                        transition: "fill 0.3s, font-weight 0.3s",
+                      }}
+                    >
+                      {node.shortName}
+                    </text>
+                    
+                    <text
+                      className="node-label"
+                      y={nodeRadius + 30}
+                      textAnchor="middle"
+                      stroke="#ffffff"
+                      strokeWidth={4}
+                      paintOrder="stroke"
+                      fill="#666"
+                      fontSize={10}
+                    >
+                      {node.year}
+                    </text>
+                  </g>
+                  );
+                }
+                return null;
+              })}
+            </g>
+            
+            {/* Bağlantı Etiketleri - En son çizilecek, her şeyin üstünde */}
+            <g className="link-labels-container" style={{ pointerEvents: "none" }}>
+              {links.map((link, i) => {
+                const isInHover = hoveredOrg && hoveredLinks.some(l => l.source === link.source && l.target === link.target);
+                const isSelected = selectedOrg && selectedLinks.some(l => l.source === link.source && l.target === link.target);
+                const midX = (link.sourceX + link.targetX) / 2;
+                const midY = (link.sourceY + link.targetY) / 2;
+                
+                let linkLabel = "";
+                switch(link.type) {
+                  case "evolution": linkLabel = "Evrim"; break;
+                  case "split": linkLabel = "Bölünme"; break;
+                  case "renamed": linkLabel = "İsim Değişikliği"; break;
+                  case "merged": linkLabel = "Birleşme"; break;
+                  case "influence": linkLabel = "Etki"; break;
+                  case "inspiration": linkLabel = "İlham"; break;
+                  case "ideological": linkLabel = "İdeolojik Etki"; break;
+                  case "direct": linkLabel = "Doğrudan"; break;
+                  default: linkLabel = link.type;
+                }
+                
+                // Sadece hover veya seçili bağlantıların etiketlerini göster
+                if (isInHover || isSelected) {
+                  return (
+                    <g
+                      key={`link-label-${i}`}
+                      className="link-label-group"
+                    >
+                      <text
+                        x={midX}
+                        y={midY}
+                        textAnchor="middle"
+                        fontSize={10}
+                        dy="-0.5em"
+                        fontWeight="bold"
+                        stroke="#ffffff"
+                        strokeWidth={4}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        fill={getLinkColor(link)}
+                        paintOrder="stroke"
+                      >
+                        {linkLabel}
+                      </text>
+                    </g>
+                  );
+                }
+                return null;
+              })}
+            </g>
+            
+            {/* Popup Bilgileri */}
+            <g className="popups-container">
+              {adjustedNodes.map(node => {
+                const isNodeHovered = hoveredOrg === node.id;
+                
+                if ((isNodeHovered || selectedOrg === node.id) && partyDetails[node.id]) {
+                  const popupWidth = 250;
+                  const popupHeight = 170;
+                  
+                  let popupX = nodeRadius + 10;
+                  let popupY = -nodeRadius - 80;
+                  let arrowPath = `M${nodeRadius} 0 L${nodeRadius + 10} -10 L${nodeRadius + 10} 10 Z`;
+                  
+                  if (node.x + popupX + popupWidth > svgWidth) {
+                    popupX = -nodeRadius - 10 - popupWidth;
+                    arrowPath = `M${-nodeRadius} 0 L${-nodeRadius - 10} -10 L${-nodeRadius - 10} 10 Z`;
+                  }
+                  
+                  return (
+                    <g 
+                      key={`popup-${node.id}`} 
+                      transform={`translate(${node.x}, ${node.y})`}
+                      className="popup-group" 
+                      style={{ 
+                        zIndex: 1000,
+                        pointerEvents: "none" 
+                      }}
+                    >
+                      <rect
+                        x={popupX}
+                        y={popupY}
+                        width={popupWidth}
+                        height={popupHeight}
+                        rx={5}
+                        fill="white"
+                        stroke="#ccc"
+                        strokeWidth={1}
+                        filter="drop-shadow(0px 4px 8px rgba(0,0,0,0.15))"
+                        opacity={0}
+                        style={{
+                          animation: "fadeIn 0.2s forwards",
+                        }}
+                      />
+                      
+                      <path
+                        d={arrowPath}
+                        fill="white"
+                        stroke="#ccc"
+                        strokeWidth={1}
+                        opacity={0}
+                        style={{
+                          animation: "fadeIn 0.2s forwards",
+                        }}
+                      />
+                      
+                      <text
+                        x={popupX + 20}
+                        y={popupY + 25}
+                        fontWeight="bold"
+                        fontSize={14}
+                        fill="#333"
+                        opacity={0}
+                        style={{
+                          animation: "slideIn 0.3s forwards",
+                        }}
+                      >
+                        {partyDetails[node.id].fullName}
+                      </text>
+                      
+                      {partyDetails[node.id].founders && (
+                        <text
+                          x={popupX + 20}
+                          y={popupY + 45}
+                          fontSize={12}
+                          fill="#555"
+                          opacity={0}
+                          style={{
+                            animation: "slideIn 0.3s forwards 0.05s",
+                          }}
+                        >
+                          <tspan fontWeight="bold">Kurucular:</tspan> {partyDetails[node.id].founders}
+                        </text>
+                      )}
+                      
+                      <text
+                        x={popupX + 20}
+                        y={popupY + 65}
+                        fontSize={12}
+                        fill={
+                          partyDetails[node.id].armed ? "#ff0000" : 
+                          partyDetails[node.id].status === "Aktif" ? "#4CAF50" : "#999999"
+                        }
+                        opacity={0}
+                        style={{
+                          animation: "slideIn 0.3s forwards 0.1s",
+                        }}
+                      >
+                        <tspan fontWeight="bold">Durum:</tspan> {partyDetails[node.id].status}
+                        {partyDetails[node.id].armed && " (Silahlı)"}
+                        {partyDetails[node.id].startYear && 
+                          ` (${partyDetails[node.id].startYear}${partyDetails[node.id].endYear ? `-${partyDetails[node.id].endYear}` : ""})`}
+                      </text>
+                      
+                      {partyDetails[node.id].website && partyDetails[node.id].website !== "" && (
+                        <text
+                          x={popupX + 20}
+                          y={popupY + 85}
+                          fontSize={12}
+                          fill="#1976d2"
+                          opacity={0}
+                          style={{
+                            animation: "slideIn 0.3s forwards 0.15s",
+                          }}
+                        >
+                          <tspan fontWeight="bold">Web:</tspan> {partyDetails[node.id].website}
+                        </text>
+                      )}
+                      
+                      <foreignObject
+                        x={popupX + 20}
+                        y={popupY + 105}
+                        width={popupWidth - 40}
+                        height={60}
+                        opacity={0}
+                        style={{
+                          animation: "slideIn 0.3s forwards 0.2s",
+                        }}
+                      >
+                        <div style={{ fontSize: "12px", color: "#555", fontFamily: "Arial", lineHeight: "1.3" }}>
+                          {partyDetails[node.id].info}
+                        </div>
+                      </foreignObject>
+                    </g>
+                  );
+                }
+                return null;
+              })}
+            </g>
+          </svg>
+        </div>
+      </div>
+      
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .full-width-container {
+          width: 100vw !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          max-width: 100vw !important;
+          overflow-x: hidden !important;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw !important;
+          margin-right: -50vw !important;
+        }
+        
+        .timeline-container {
+          position: relative;
+          overflow: hidden !important;
+          width: 100vw !important;
+        }
+        
+        .node-circle {
+          filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.1));
+          transition: stroke 0.4s ease-in-out, 
+                      stroke-width 0.4s ease-in-out, 
+                      opacity 0.4s ease-in-out,
+                      transform 0.3s ease-out;
+        }
+        
+        .node-circle:hover {
+          transform: scale(1.05);
+        }
+        
+        .node-circle.selected {
+          stroke-width: 2px !important;
+          filter: drop-shadow(0px 2px 5px rgba(0, 0, 0, 0.3));
+        }
+        
+        .link-group.active.selected path {
+          stroke-width: 3px;
+        }
+        
+        .link-path {
+          transition: stroke 0.4s ease-in-out, 
+                      stroke-width 0.4s ease-in-out, 
+                      opacity 0.4s ease-in-out;
+        }
+        
+        .popup-group {
+          pointer-events: none;
+        }
+        
+        /* Bağlantı etiketleri için stil */
+        .link-labels-container {
+          pointer-events: none;
+        }
+        
+        .link-path.highlighted {
+          stroke-width: 3px;
+        }
+        
+        body {
+          overflow-x: hidden !important;
+          max-width: 100vw !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        
+        svg {
+          overflow: visible;
+          width: 100vw !important;
+        }
+        
+        /* Margin sorununu çözmek için ekstrem önlemler */
+        html, body, #root, #__next {
+          overflow-x: hidden !important;
+          width: 100% !important;
+          max-width: 100vw !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          position: relative;
+        }
+        
+        /* Tailwind container sınıfının özelliklerini geçersiz kıl */
+        .container, div[class^="container"] {
+          width: 100vw !important;
+          max-width: 100vw !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+        }
+      `}</style>
+    </div>
+  );
+}
