@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/solagaci/static/css/main.d87b9eee.css",
-    "main.js": "/solagaci/static/js/main.0a307104.js",
+    "main.css": "/solagaci/static/css/main.c59c4d7a.css",
+    "main.js": "/solagaci/static/js/main.7776fa2c.js",
     "index.html": "/solagaci/index.html",
-    "main.d87b9eee.css.map": "/solagaci/static/css/main.d87b9eee.css.map",
-    "main.0a307104.js.map": "/solagaci/static/js/main.0a307104.js.map"
+    "main.c59c4d7a.css.map": "/solagaci/static/css/main.c59c4d7a.css.map",
+    "main.7776fa2c.js.map": "/solagaci/static/js/main.7776fa2c.js.map"
   },
   "entrypoints": [
-    "static/css/main.d87b9eee.css",
-    "static/js/main.0a307104.js"
+    "static/css/main.c59c4d7a.css",
+    "static/js/main.7776fa2c.js"
   ]
 }
